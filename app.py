@@ -39,10 +39,13 @@ st.markdown("""
 st.title("🇩🇪 Tutor Pedagógico de Fonética do Alemão")
 st.caption("Ferramenta de apoio ao estudo do sistema vocálico do alemão padrão (PPGI-UFPel)")
 
-# Configuração da chave de API na barra lateral
-api_key = st.sidebar.text_input("Insira sua API Key do Gemini:", type="password")
-st.sidebar.markdown("---")
+# Informação institucional na barra lateral
 st.sidebar.info("Projeto pautado nas diretrizes de integridade do CNPq e MEC.")
+st.sidebar.markdown("---")
+st.sidebar.caption("Assistente alimentado por Gemini 3.5 Flash Lite")
+
+# Leitura automática da API Key dos Secrets do Streamlit Cloud
+api_key = st.secrets.get("GEMINI_API_KEY") or os.environ.get("GEMINI_API_KEY")
 
 # Histórico de mensagens
 if "messages" not in st.session_state:
@@ -56,7 +59,7 @@ for message in st.session_state.messages:
 # Caixa de digitação do aluno
 if user_input := st.chat_input("Pergunte sobre uma vogal ou par mínimo..."):
     if not api_key:
-        st.error("Insira a API Key na barra lateral para continuar.")
+        st.error("Erro de configuração: Chave de API não encontrada nos Secrets do servidor.")
     else:
         st.session_state.messages.append({"role": "user", "content": user_input})
         with st.chat_message("user"):
