@@ -1,5 +1,5 @@
 import os
-import Streamlit as st
+import streamlit as st
 from google import genai
 from google.genai import types
 
@@ -49,7 +49,6 @@ if user_input := st.chat_input("Pergunte sobre uma vogal ou par mínimo..."):
 
         client = genai.Client(api_key=api_key)
 
-        # Instrução do sistema mantida integralmente
         system_instruction = """You are an expert Pedagogical Tutor and Academic Assistant specialized in Standard German Phonetics. Your role is to interactively guide students in understanding the German vowel triangle using a concise, objective, ethical, and bibliographically-grounded approach.
 
 LANGUAGE REQUIREMENT: All interactions with the user MUST be conducted in Portuguese.
