@@ -1,7 +1,9 @@
 import os
+import io
 import streamlit as st
 from google import genai
 from google.genai import types
+from gtts import gTTS
 
 # Configuração da página web
 st.set_page_config(
@@ -35,15 +37,29 @@ api_key = st.secrets.get("GEMINI_API_KEY") or os.environ.get("GEMINI_API_KEY")
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
+# Função auxiliar para gerar player de áudio em alemão
+def gerar_audio_alemao(texto):
+    try:
+        tts = gTTS(text=texto, lang='de')
+        fp = io.BytesIO()
+        tts.write_to_fp(fp)
+        fp.seek(0)
+        return fp
+    except Exception:
+        return None
+
+# Exibe o histórico de mensagens
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
+        if "audio" in message and message["audio"]:
+            st.audio(message["audio"], format="audio/mp3")
 
 if user_input := st.chat_input("Pergunte sobre uma vogal ou par mínimo..."):
     if not api_key:
         st.error("Erro de configuração: Chave de API não encontrada nos Secrets do servidor.")
     else:
-        st.session_state.messages.append({"role": "user", "content": user_input})
+        st.session_state.messages.append({"role": "user", "content": user_input, "audio": None})
         with st.chat_message("user"):
             st.markdown(user_input)
 
@@ -51,22 +67,20 @@ if user_input := st.chat_input("Pergunte sobre uma vogal ou par mínimo..."):
 
         system_instruction = """You are an expert Pedagogical Tutor and Academic Assistant specialized in Standard German Phonetics. Your role is to interactively guide students in understanding the German vowel triangle using a concise, objective, ethical, and bibliographically-grounded approach.
 
-LANGUAGE REQUIREMENT: All interactions with the user MUST be conducted in Portuguese.
+LANGUAGE REQUIREMENT: All interactions with the user MUST be conducted in Portuguese. Always include clear German example words (in standard German orthography) for any vowel discussed.
 
 CORE FUNCTIONALITY:
-1. Phonetic Description: Explain German vowels based on their phonetic parameters: height/openness, anteriority/backness, roundedness, and tenseness. Keep explanations direct, highly objective, descriptive, and concise. Avoid unnecessary conversational filler.
+1. Phonetic Description: Explain German vowels based on their phonetic parameters: height/openness, anteriority/backness, roundedness, and tenseness. Keep explanations direct, highly objective, descriptive, and concise.
 2. Academic Grounding (Brazilian Literature Focus): Whenever explaining a vowel or concept, reference relevant Brazilian research/literature on German phonetics (e.g., ABRALIN, Brazilian university repositories).
 3. Interactive Pedagogy: Conclude phonetic responses with a single, short interactive question.
 
 ETHICAL COMPLIANCE & GOVERNANCE (MEC & CNPq DIRECTIVES):
-1. Academic Integrity & Authorship (CNPq): Act strictly as a tutor and study copilot. Never write full academic articles/essays.
+1. Academic Integrity & Authorship (CNPq): Act strictly as a tutor and study copilot.
 2. Data Privacy & Safety (MEC/LGPD): Do not request or collect Personally Identifiable Information (PII).
-3. Confidentiality (CNPq): Refuse peer-review generation on unpublished manuscripts.
-4. Transparency & Bias Prevention (MEC): Maintain a neutral, transparent tone.
 
 RESPONSE FORMAT (in Portuguese):
 - Direct and objective phonetic classification (bullet points for parameters).
-- Brief, concise pedagogical context (max 2-3 sentences).
+- Brief, concise pedagogical context with clear German example words.
 - Citation of 1-2 open-access academic sources prioritizing Brazilian researchers.
 - Concise interactive follow-up question."""
 
@@ -91,7 +105,14 @@ RESPONSE FORMAT (in Portuguese):
                             response_placeholder.markdown(full_response + "▌")
                 
                 response_placeholder.markdown(full_response)
-                st.session_state.messages.append({"role": "assistant", "content": full_response})
+                
+                # Gerar áudio para a resposta
+                audio_file = gerar_audio_alemao(full_response)
+                if audio_file:
+                    st.audio(audio_file, format="audio/mp3")
+                    st.session_state.messages.append({"role": "assistant", "content": full_response, "audio": audio_file})
+                else:
+                    st.session_state.messages.append({"role": "assistant", "content": full_response, "audio": None})
             
-            except Exception as e:
+            except Exception:
                 st.error("A cota temporária do servidor foi atingida. Aguarde cerca de 1 minuto e tente novamente.")
