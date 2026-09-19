@@ -103,11 +103,11 @@ RESPONSE FORMAT (in Portuguese):
             full_response = ""
             
             with st.spinner("Analisando parâmetros e buscando fontes..."):
-                for chunk in client.models.generate_content_stream(
-                    model="gemini-3.5-flash-lite",
-                    contents=user_input,
-                    config=config,
-                ):
+              for chunk in client.models.generate_content_stream(
+    model="gemini-3.5-flash-lite",  # Alterado para 3.5
+    contents=user_input,
+    config=config,
+):
                     if chunk.text:
                         full_response += chunk.text
                         response_placeholder.markdown(full_response + "▌")
